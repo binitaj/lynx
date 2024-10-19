@@ -44,12 +44,6 @@ public class SecretsService {
                  InvalidKeyException e) {
             throw new EncryptionFailedException(e);
         }
-        try {
-            redisTemplate.opsForValue().set(secret.key, secret);
-            log.info(String.format("Key %s written to Redis for client %s", secret.key, cert.getSubjectX500Principal()));
-        } catch (Exception ce) {
-            log.error("Redis store failed",  ce);
-        }
         return toStore;
     }
 
@@ -64,9 +58,26 @@ public class SecretsService {
         return toStore;
     }
 
-    public Secret retrieve(X509Certificate cert, Secret secret) throws EncryptionFailedException {
-        Secret resp = redisTemplate.opsForValue().get(secret.key);
-        log.debug(secret.key + ":" + (resp == null));
+    public Secret store(X509Certificate cert, Secret secret) {
+        try {
+            redisTemplate.opsForValue().set(secret.key.trim(), secret);
+            Secret s = retrieve(cert, secret);
+            if(s == null || !s.encrypted.equals(secret.encrypted)) {
+                log.error("Redis store failed " + secret.encrypted + " : " + s);
+                return null;
+            } else {
+                log.info(String.format("Key %s written to Redis for client %s", secret.key, cert.getSubjectX500Principal()));
+            }
+        } catch (Exception ce) {
+            log.error("Redis store failed",  ce);
+            return null;
+        }
+        return secret;
+    }
+
+    public Secret retrieve(X509Certificate cert, Secret secret) {
+        Secret resp = redisTemplate.opsForValue().get(secret.key.trim());
+        log.info(secret.key + ":" + (resp == null));
         return resp;
     }
 

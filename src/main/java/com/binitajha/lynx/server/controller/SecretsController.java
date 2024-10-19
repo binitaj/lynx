@@ -47,7 +47,7 @@ public class SecretsController {
     public ResponseEntity<Secret> encrypt(@RequestBody Secret secret, HttpServletRequest request) {
         X509Certificate[] certs = (X509Certificate[]) request.getAttribute("jakarta.servlet.request.X509Certificate");
         X509Certificate cert = certs[0];
-        String msg = hasher.hashedMessage(cert, String.format("Received encryption request %s", secret.id));
+        String msg = hasher.hashedMessage(cert, String.format("Received encryption request %s", secret.getId()));
         log.warn(msg);
         try {
             Secret encrypted = service.encrypt(cert, secret);
@@ -62,7 +62,7 @@ public class SecretsController {
     public ResponseEntity<Secret> decrypt(@RequestBody Secret secret, HttpServletRequest request) {
         X509Certificate[] certs = (X509Certificate[]) request.getAttribute("jakarta.servlet.request.X509Certificate");
         X509Certificate cert = certs[0];
-        String msg = hasher.hashedMessage(cert, String.format("Received encryption request %s, key: %s", secret.id, secret.key));
+        String msg = hasher.hashedMessage(cert, String.format("Received decryption request %s, key: %s", secret.getId(), secret.key));
         log.warn(msg);
         try {
             Secret encrypted = service.decrypt(cert, secret);
@@ -73,20 +73,36 @@ public class SecretsController {
         }
     }
 
-    @PostMapping("/retrieve")
-    public ResponseEntity<Secret> retrieve(@RequestBody Secret secret, HttpServletRequest request) {
+
+    @PostMapping("/store")
+    public ResponseEntity<Secret> store(@RequestBody Secret secret, HttpServletRequest request) {
         X509Certificate[] certs = (X509Certificate[]) request.getAttribute("jakarta.servlet.request.X509Certificate");
         X509Certificate cert = certs[0];
-        String msg = hasher.hashedMessage(cert, String.format("Received retrieval request %s, key: %s", secret.id, secret.key));
+        String msg = hasher.hashedMessage(cert, String.format("Received request #%s to store, Secret: %s", secret.getId(), secret));
         log.warn(msg);
         try {
-            Secret encrypted = service.retrieve(cert, secret);
+            Secret encrypted = service.encrypt(cert, secret);
+            System.out.println("Encrypted: " + encrypted);
+            encrypted = service.store(cert, encrypted);
+            System.out.println("Stored: " + encrypted);
             if (encrypted != null) return ResponseEntity.ok(encrypted);
             else return ResponseEntity.notFound().build();
         } catch (EncryptionFailedException e) {
             e.exception.printStackTrace();
             return ResponseEntity.badRequest().header("Error", e.exception.getMessage()).build();
         }
+    }
+
+    @PostMapping("/retrieve")
+    public ResponseEntity<Secret> retrieve(@RequestBody Secret secret, HttpServletRequest request) {
+        X509Certificate[] certs = (X509Certificate[]) request.getAttribute("jakarta.servlet.request.X509Certificate");
+        X509Certificate cert = certs[0];
+        String msg = hasher.hashedMessage(cert, String.format("Received retrieval request %s, key: %s", secret.getId(), secret.key.trim()));
+        log.warn(msg);
+        Secret encrypted = service.retrieve(cert, secret);
+        if (encrypted != null) return ResponseEntity.ok(encrypted);
+        else return ResponseEntity.notFound().build();
+
     }
 
 }

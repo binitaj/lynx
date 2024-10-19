@@ -40,6 +40,7 @@ public class AES {
 
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        System.out.println("Before enc: " + es.data + ":[" + es.encrypted + "]");
 
         byte[] encryptedBytes = cipher.doFinal(es.data.getBytes(StandardCharsets.UTF_8));
 
@@ -49,8 +50,7 @@ public class AES {
             System.out.println(Arrays.toString(decode(es)));
 
         };
-
-        System.out.println(es.data + ":[" + es.encrypted + "]");
+        System.out.println("After enc: " + es.data + ":[" + es.encrypted + "]");
         decrypt(es, cert);
 //        String key = Base64.getEncoder().encodeToString(secretKey.getEncoded());
 //        System.out.println(String.format("%s + %s = %s", es.data, key, es.encrypted));
@@ -64,6 +64,7 @@ public class AES {
         } else if(resp.endsWith("B")) {
             resp = resp.substring(0, resp.length() - 1) + "=";
         }
+        System.out.println("Response: " + resp);
         return Base64.getDecoder().decode(resp);
     }
 
@@ -87,10 +88,11 @@ public class AES {
         Cipher cipher = Cipher.getInstance("AES");
         cipher. init(Cipher.DECRYPT_MODE, secretKey);
         byte[] crypt = decode(es);
-
+        System.out.println(Arrays.toString(crypt));
         byte[] decryptedBytes = cipher.doFinal(crypt);
+        System.out.println(Arrays.toString(decryptedBytes));
         es.data = new String(decryptedBytes, StandardCharsets.UTF_8);
-//        System.out.println(es.data + ":"  + es.encrypted);
+        System.out.println(es.data + ":"  + es.encrypted);
         return es;
 
     }

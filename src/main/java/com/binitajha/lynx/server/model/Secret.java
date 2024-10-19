@@ -4,14 +4,20 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.TimeToLive;
 
 import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
+@RedisHash(timeToLive = -1L)
 public class Secret implements Serializable {
-
-    public String id;
+    @Id
+    private String id;
+    @TimeToLive
+    private Long expirationInSeconds = -1L;
 
     public String key;
     public String data;
