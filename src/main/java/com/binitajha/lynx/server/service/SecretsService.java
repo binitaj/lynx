@@ -2,18 +2,15 @@ package com.binitajha.lynx.server.service;
 
 import com.binitajha.lynx.server.crypto.AES;
 import com.binitajha.lynx.server.model.Secret;
-import com.binitajha.lynx.server.repository.SecretsRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import java.net.ConnectException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -60,13 +57,13 @@ public class SecretsService {
 
     public Secret store(X509Certificate cert, Secret secret) {
         try {
-            redisTemplate.opsForValue().set(secret.key.trim(), secret);
+            redisTemplate.opsForValue().set(secret.getKey().trim(), secret);
             Secret s = retrieve(cert, secret);
-            if(s == null || !s.encrypted.equals(secret.encrypted)) {
-                log.error("Redis store failed " + secret.encrypted + " : " + s);
+            if(s == null || !s.getEncrypted().equals(secret.getEncrypted())) {
+                log.error("Redis store failed " + secret.getEncrypted() + " : " + s);
                 return null;
             } else {
-                log.info(String.format("Key %s written to Redis for client %s", secret.key, cert.getSubjectX500Principal()));
+                log.info(String.format("Key %s written to Redis for client %s", secret.getKey(), cert.getSubjectX500Principal()));
             }
         } catch (Exception ce) {
             log.error("Redis store failed",  ce);
@@ -76,8 +73,8 @@ public class SecretsService {
     }
 
     public Secret retrieve(X509Certificate cert, Secret secret) {
-        Secret resp = redisTemplate.opsForValue().get(secret.key.trim());
-        log.info(secret.key + ":" + (resp == null));
+        Secret resp = redisTemplate.opsForValue().get(secret.getKey().trim());
+        log.info(secret.getKey() + ":" + (resp == null));
         return resp;
     }
 

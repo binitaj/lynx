@@ -62,7 +62,7 @@ public class SecretsController {
     public ResponseEntity<Secret> decrypt(@RequestBody Secret secret, HttpServletRequest request) {
         X509Certificate[] certs = (X509Certificate[]) request.getAttribute("jakarta.servlet.request.X509Certificate");
         X509Certificate cert = certs[0];
-        String msg = hasher.hashedMessage(cert, String.format("Received decryption request %s, key: %s", secret.getId(), secret.key));
+        String msg = hasher.hashedMessage(cert, String.format("Received decryption request %s, key: %s", secret.getId(), secret.getKey()));
         log.warn(msg);
         try {
             Secret encrypted = service.decrypt(cert, secret);
@@ -82,9 +82,7 @@ public class SecretsController {
         log.warn(msg);
         try {
             Secret encrypted = service.encrypt(cert, secret);
-            System.out.println("Encrypted: " + encrypted);
             encrypted = service.store(cert, encrypted);
-            System.out.println("Stored: " + encrypted);
             if (encrypted != null) return ResponseEntity.ok(encrypted);
             else return ResponseEntity.notFound().build();
         } catch (EncryptionFailedException e) {
@@ -97,7 +95,7 @@ public class SecretsController {
     public ResponseEntity<Secret> retrieve(@RequestBody Secret secret, HttpServletRequest request) {
         X509Certificate[] certs = (X509Certificate[]) request.getAttribute("jakarta.servlet.request.X509Certificate");
         X509Certificate cert = certs[0];
-        String msg = hasher.hashedMessage(cert, String.format("Received retrieval request %s, key: %s", secret.getId(), secret.key.trim()));
+        String msg = hasher.hashedMessage(cert, String.format("Received retrieval request %s, key: %s", secret.getId(), secret.getKey().trim()));
         log.warn(msg);
         Secret encrypted = service.retrieve(cert, secret);
         if (encrypted != null) return ResponseEntity.ok(encrypted);

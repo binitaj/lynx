@@ -25,7 +25,7 @@ import java.util.Collections;
 public class RedisConfig {
     @Bean
     public LettuceConnectionFactory redisConnectionFactory(RedisProperties redisProperties) {
-        System.out.println("Binding to redis at "+ redisProperties.getHost());
+        log.warn("Binding to redis at "+ redisProperties.getHost());
         return new LettuceConnectionFactory(redisProperties.getHost(), redisProperties.getPort());
     }
 

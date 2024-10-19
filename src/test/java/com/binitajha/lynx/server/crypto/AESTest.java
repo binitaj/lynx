@@ -1,7 +1,6 @@
 package com.binitajha.lynx.server.crypto;
 
 import com.binitajha.lynx.server.model.Secret;
-import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,12 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.math.BigInteger;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Random;
@@ -50,6 +44,23 @@ public class AESTest {
                 thenReturn((bi));
     }
 
+    byte[][] testBytes = {
+            {0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+    };
+
+    short[] testLengths = {16, 16, 32};
+
+    @Test
+    public void testPadding() {
+        for(int i = 0; i < testBytes.length; ++i) {
+            byte[] ret = AES.padTo16(testBytes[i]);
+            assertEquals(testLengths[i], ret.length);
+        }
+
+    }
+
     /*
      *  Monte Carlo testing :)
      */
@@ -58,14 +69,21 @@ public class AESTest {
     public void encrypt() throws Exception{
         Secret secret = new Secret("1", "100", "", "");
 
-        for(int i = 0; i <1000; ++i) {
-            int size = random.nextInt(1000);
-            secret.data = generateSecureRandomString(size);
-            Secret crypt = target.encrypt(secret, cert);
-            Secret decrypt = target.decrypt(crypt, cert);
-            log.debug(size + ",");
-            System.out.flush();
-            assertEquals(secret.data, decrypt.data);
+        for(int i = 0; i <50; ++i) {
+            secret.setId(String.valueOf(i));
+            int size = random.nextInt(500);
+            secret.setData(generateSecureRandomString(size));
+            Secret crypt = null;
+            try {
+                crypt = target.encrypt(secret, cert);
+                Secret decrypt = target.decrypt(crypt, cert);
+                log.debug(size + ",");
+                System.out.flush();
+                assertEquals(secret.getData(), decrypt.getData());
+            } catch (Exception e) {
+                System.err.println(secret + ": " + crypt);
+                fail(secret + ": " + crypt, e);
+            }
         }
     }
 

@@ -19,9 +19,9 @@ public class Secret implements Serializable {
     @TimeToLive
     private Long expirationInSeconds = -1L;
 
-    public String key;
-    public String data;
-    public String encrypted;
+    private String key;
+    private String data;
+    private String encrypted;
 
     public Secret(String i, String k, String d, String e) {
         this.encrypted = e;
