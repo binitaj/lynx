@@ -6,6 +6,8 @@ import com.binitajha.lynx.server.service.EncryptionFailedException;
 import com.binitajha.lynx.server.service.SecretsService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,10 +19,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 
 @RestController
-@Slf4j
 public class SecretsController {
 
     private final Hasher hasher;
+
+    static final Logger log = LoggerFactory.getLogger(SecretsController.class.getName());
 
     @Autowired
     private SecretsService service;
@@ -50,8 +53,8 @@ public class SecretsController {
             Secret encrypted = service.encrypt(cert, secret);
             return ResponseEntity.ok(encrypted);
         } catch (EncryptionFailedException e) {
-            e.getE().printStackTrace();
-            return ResponseEntity.badRequest().build();
+            e.exception.printStackTrace();
+            return ResponseEntity.badRequest().header("Error", e.exception.getMessage()).build();
         }
     }
 
@@ -65,23 +68,24 @@ public class SecretsController {
             Secret encrypted = service.decrypt(cert, secret);
             return ResponseEntity.ok(encrypted);
         } catch (EncryptionFailedException e) {
-            e.getE().printStackTrace();
-            return ResponseEntity.badRequest().header("Error", e.getE().getMessage()).build();
+            e.exception.printStackTrace();
+            return ResponseEntity.badRequest().header("Error", e.exception.getMessage()).build();
         }
     }
 
     @PostMapping("/retrieve")
-    public ResponseEntity<Secret> decrypt(@RequestBody Secret secret, HttpServletRequest request) {
+    public ResponseEntity<Secret> retrieve(@RequestBody Secret secret, HttpServletRequest request) {
         X509Certificate[] certs = (X509Certificate[]) request.getAttribute("jakarta.servlet.request.X509Certificate");
         X509Certificate cert = certs[0];
         String msg = hasher.hashedMessage(cert, String.format("Received retrieval request %s, key: %s", secret.id, secret.key));
         log.warn(msg);
         try {
-            Secret encrypted = service.decrypt(cert, secret);
-            return ResponseEntity.ok(encrypted);
+            Secret encrypted = service.retrieve(cert, secret);
+            if (encrypted != null) return ResponseEntity.ok(encrypted);
+            else return ResponseEntity.notFound().build();
         } catch (EncryptionFailedException e) {
-            e.getE().printStackTrace();
-            return ResponseEntity.badRequest().header("Error", e.getE().getMessage()).build();
+            e.exception.printStackTrace();
+            return ResponseEntity.badRequest().header("Error", e.exception.getMessage()).build();
         }
     }
 

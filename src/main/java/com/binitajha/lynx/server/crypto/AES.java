@@ -14,7 +14,10 @@ import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Base64;
+
+import static java.util.Arrays.compare;
 
 public class AES {
 
@@ -40,11 +43,42 @@ public class AES {
 
         byte[] encryptedBytes = cipher.doFinal(es.data.getBytes(StandardCharsets.UTF_8));
 
-        es.encrypted = Base64.getEncoder().encodeToString(encryptedBytes);
-        String key = Base64.getEncoder().encodeToString(secretKey.getEncoded());
+        es.encrypted = encode(encryptedBytes);
+        if(compare(encryptedBytes, decode(es)) != 0) {
+            System.out.println(Arrays.toString(encryptedBytes));
+            System.out.println(Arrays.toString(decode(es)));
+
+        };
+
+        System.out.println(es.data + ":[" + es.encrypted + "]");
         decrypt(es, cert);
+//        String key = Base64.getEncoder().encodeToString(secretKey.getEncoded());
 //        System.out.println(String.format("%s + %s = %s", es.data, key, es.encrypted));
         return es;
+    }
+
+    private static byte[] decode(Secret es) {
+        String resp = es.encrypted;
+        if(resp.endsWith("A")) {
+            resp = resp.substring(0, resp.length() - 1) + "==";
+        } else if(resp.endsWith("B")) {
+            resp = resp.substring(0, resp.length() - 1) + "=";
+        }
+        return Base64.getDecoder().decode(resp);
+    }
+
+    private static String encode(byte[] encryptedBytes) {
+
+        String resp = Base64.getEncoder().encodeToString(encryptedBytes);
+        String resp2 = null;
+        if(resp.endsWith("==")) {
+            resp2 = resp.substring(0, resp.length() - 2) + "A";
+        } else if(resp.endsWith("=")) {
+            resp2 =resp.substring(0, resp.length() - 1) + "B";
+        } else {
+            resp2 = resp;
+        }
+        return resp2;
     }
 
     public Secret decrypt(Secret es, X509Certificate cert) throws NoSuchPaddingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
@@ -52,7 +86,7 @@ public class AES {
 
         Cipher cipher = Cipher.getInstance("AES");
         cipher. init(Cipher.DECRYPT_MODE, secretKey);
-        byte[] crypt = Base64.getDecoder().decode(es.encrypted);
+        byte[] crypt = decode(es);
 
         byte[] decryptedBytes = cipher.doFinal(crypt);
         es.data = new String(decryptedBytes, StandardCharsets.UTF_8);

@@ -11,7 +11,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.math.BigInteger;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Random;
@@ -23,7 +28,7 @@ import static org.mockito.Mockito.lenient;
 @Slf4j
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
-class AESTest {
+public class AESTest {
 
     static byte[] bytes = new byte[] { 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38 };
     static BigInteger bi = new BigInteger(bytes);
@@ -65,7 +70,9 @@ class AESTest {
     }
 
     @org.junit.jupiter.api.Test
-    void decrypt() {
+    void decrypt() throws Exception {
+        Secret secret = new Secret("1", "key", "simple text", "");
+        target.encrypt(secret, cert);
     }
 
     @org.junit.jupiter.api.Test

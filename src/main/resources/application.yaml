@@ -1,9 +1,10 @@
 spring:
   application:
     name: lynx
-  redis:
-    host: localhost
-    port: 6379
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
 #    aof: true
 #    aof-mode: everysec
 #    aof-rewrite-min-size: 16

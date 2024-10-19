@@ -2,11 +2,18 @@ package com.binitajha.lynx.server.service;
 
 import com.binitajha.lynx.server.crypto.AES;
 import com.binitajha.lynx.server.model.Secret;
+import com.binitajha.lynx.server.repository.SecretsRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.net.ConnectException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -15,6 +22,11 @@ import java.security.cert.X509Certificate;
 public class SecretsService {
 
     private AES aes;
+
+    private final static Logger log = LoggerFactory.getLogger(SecretsService.class.getName());
+
+    @Autowired
+    private RedisTemplate<String, Secret> redisTemplate;
 
     public SecretsService() throws EncryptionFailedException  {
         try {
@@ -32,6 +44,12 @@ public class SecretsService {
                  InvalidKeyException e) {
             throw new EncryptionFailedException(e);
         }
+        try {
+            redisTemplate.opsForValue().set(secret.key, secret);
+            log.info(String.format("Key %s written to Redis for client %s", secret.key, cert.getSubjectX500Principal()));
+        } catch (Exception ce) {
+            log.error("Redis store failed",  ce);
+        }
         return toStore;
     }
 
@@ -45,4 +63,11 @@ public class SecretsService {
         }
         return toStore;
     }
+
+    public Secret retrieve(X509Certificate cert, Secret secret) throws EncryptionFailedException {
+        Secret resp = redisTemplate.opsForValue().get(secret.key);
+        log.debug(secret.key + ":" + (resp == null));
+        return resp;
+    }
+
 }
