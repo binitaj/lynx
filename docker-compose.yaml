@@ -1,0 +1,27 @@
+version: '3'
+services:
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --appendfilename appendonly.aof --dbfilename dump.rdb
+    restart: unless-stopped
+  lynx-service:
+    image: binij/lynx:0.1
+    container_name: lynx
+    ports:
+      - "8443:8443"
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    volumes:
+      - app-data:/app
+volumes:
+  redis-data:
+
+  app-data:

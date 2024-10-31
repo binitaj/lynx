@@ -34,3 +34,4 @@ build/
 ### JCE ###
 *.cer
 *.p12
+src/Scratch
